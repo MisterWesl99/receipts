@@ -1,3 +1,5 @@
+app_pass.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
