@@ -63,51 +63,56 @@ try:
     for email_id in email_ids:
         print(f"\nVerarbeite E-Mail ID: {email_id.decode()}")
 
-        # E-Mail-Daten abrufen (vollständige Nachricht nach RFC822)
-        status, msg_data = mail.fetch(email_id, '(RFC822)')
-        if status != 'OK':
-            print(f"Fehler beim Abrufen von E-Mail ID {email_id.decode()}.")
+        file = os.path.join(ATTACHMENT_DIR, email_id.decode()+'.pdf')
+        if os.path.isfile(file):
+            print(f"  E-Mail ID {email_id.decode()} bereits verarbeitet. Überspringe...")
             continue
+        else:
+            # E-Mail-Daten abrufen (vollständige Nachricht nach RFC822)
+            status, msg_data = mail.fetch(email_id, '(RFC822)')
+            if status != 'OK':
+                print(f"Fehler beim Abrufen von E-Mail ID {email_id.decode()}.")
+                continue
 
-        for response_part in msg_data:
-            if isinstance(response_part, tuple):
-                # E-Mail parsen
-                msg = email.message_from_bytes(response_part[1])
+            for response_part in msg_data:
+                if isinstance(response_part, tuple):
+                    # E-Mail parsen
+                    msg = email.message_from_bytes(response_part[1])
 
-                # Absender und Betreff extrahieren und dekodieren
-                sender = decode_subject(msg.get('From'))
-                subject = decode_subject(msg.get('Subject'))
-                print(f"  Von: {sender}")
-                print(f"  Betreff: {subject}")
+                    # Absender und Betreff extrahieren und dekodieren
+                    sender = decode_subject(msg.get('From'))
+                    subject = decode_subject(msg.get('Subject'))
+                    print(f"  Von: {sender}")
+                    print(f"  Betreff: {subject}")
 
-                # --- Anhänge suchen und verarbeiten ---
-                if msg.is_multipart():
-                    for part in msg.walk():
-                        content_disposition = str(part.get("Content-Disposition"))
+                    # --- Anhänge suchen und verarbeiten ---
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            content_disposition = str(part.get("Content-Disposition"))
 
-                        # Prüfen, ob es sich um einen Anhang handelt
-                        if "attachment" in content_disposition:
-                            filename = part.get_filename()
-                            if filename:
-                                filename = decode_subject(filename) # Dateinamen auch dekodieren
-                                print(f"  Anhang gefunden: {filename}")
+                            # Prüfen, ob es sich um einen Anhang handelt
+                            if "attachment" in content_disposition:
+                                filename = part.get_filename()
+                                if filename:
+                                    filename = decode_subject(filename) # Dateinamen auch dekodieren
+                                    print(f"  Anhang gefunden: {filename}")
 
-                                # Nutzdaten (Inhalt) des Anhangs holen und dekodieren (oft Base64)
-                                payload = part.get_payload(decode=True)
+                                    # Nutzdaten (Inhalt) des Anhangs holen und dekodieren (oft Base64)
+                                    payload = part.get_payload(decode=True)
 
-                                if payload:
-                                    #Anhang speichern
-                                    filepath = os.path.join(ATTACHMENT_DIR, email_id.decode()+'.pdf')
-                                    try:
-                                        with open(filepath, 'wb') as f:
-                                            f.write(payload)
-                                        print(f"  Anhang gespeichert unter: {filepath}")
-                                    except Exception as e_save:
-                                        print(f"  Fehler beim Speichern von '{filename}': {e_save}")
-                                else:
-                                     print(f"  Anhang '{filename}' hat keinen Inhalt.")
-                else:
-                    print("  Keine Anhänge (keine Multipart-Nachricht).")
+                                    if payload:
+                                        #Anhang speichern
+                                        filepath = os.path.join(ATTACHMENT_DIR, email_id.decode()+'.pdf')
+                                        try:
+                                            with open(filepath, 'wb') as f:
+                                                f.write(payload)
+                                            print(f"  Anhang gespeichert unter: {filepath}")
+                                        except Exception as e_save:
+                                            print(f"  Fehler beim Speichern von '{filename}': {e_save}")
+                                    else:
+                                        print(f"  Anhang '{filename}' hat keinen Inhalt.")
+                    else:
+                        print("  Keine Anhänge (keine Multipart-Nachricht).")
 
 except imaplib.IMAP4.error as e:
     print(f"IMAP Fehler: {e}")
