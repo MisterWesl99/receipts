@@ -3,6 +3,7 @@ import email
 from email.header import decode_header
 import os
 import getpass # Für sichere Passworteingabe
+import csv
 
 def extract():
     # --- Konfiguration ---
@@ -51,7 +52,7 @@ def extract():
         search_criteria = f'FROM "{FILTER_EMAIL}"'
 
         print(f"Suche nach E-Mails mit Kriterium: {search_criteria}...")
-        status, search_result = mail.search(None, search_criteria)
+        status, search_result = mail.uid("search", None, search_criteria)
 
         if status != 'OK':
             print("Fehler bei der Suche nach E-Mails.")
@@ -70,7 +71,7 @@ def extract():
                 continue
             else:
                 # E-Mail-Daten abrufen (vollständige Nachricht nach RFC822)
-                status, msg_data = mail.fetch(email_id, '(RFC822)')
+                status, msg_data = mail.uid("fetch", email_id, '(RFC822)')
                 if status != 'OK':
                     print(f"Fehler beim Abrufen von E-Mail ID {email_id.decode()}.")
                     continue

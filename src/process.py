@@ -23,8 +23,17 @@ def process():
 
     print(f"Anzahl der PDF-Dateien im Verzeichnis: {counter}")
 
+    email_ids = []
+
+    with open('processed_emails.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in reader:
+            email_ids.append(row)
+
     for file in os.listdir(file_path):
-        if file.endswith(".pdf"):
+        email_id = file.removesuffix(".pdf")
+        if file.endswith(".pdf") and email_id not in email_ids:
+            email_ids.append(email_id)
             counter -= 1
             if counter % 10 == 0:
                 print(counter)
@@ -64,6 +73,9 @@ def process():
             dic[extracted_month] = dic.get(extracted_month, 0.0) + extracted_price
 
     dic = dict(sorted(dic.items(), key=lambda item: (int(item[0].split('.')[1]), int(item[0].split('.')[0]))))
+    
+    dic["avg"] = round(sum(dic.values()) / len(dic), 2)
+
     print(dic)
 
     # Define the headers (column names)
@@ -88,3 +100,18 @@ def process():
 
     except IOError:
         print(f"Error: Could not write to the file {filename}.")
+
+    try:
+        with open("processed_emails.csv", 'w', newline='', encoding='utf-8') as csvfile:
+            # Create a csv writer object
+            csvwriter = csv.writer(csvfile)
+            rows_to_write = [[email] for email in email_ids]
+            # Write the data rows
+            csvwriter.writerows(email_ids)
+
+        print(f"Successfully created the file: {filename}")
+
+    except IOError:
+        print(f"Error: Could not write to the file {filename}.")
+
+process()
