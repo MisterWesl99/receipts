@@ -2,6 +2,7 @@ attachments/
 .vscode
 app_pass.txt
 monthly_euros.csv
+processed_emails.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

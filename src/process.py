@@ -30,9 +30,11 @@ def process():
         for row in reader:
             email_ids.append(row)
 
+    email_ids_set = {item[0] for item in email_ids}
+
     for file in os.listdir(file_path):
         email_id = file.removesuffix(".pdf")
-        if file.endswith(".pdf") and email_id not in email_ids:
+        if file.endswith(".pdf") and email_id not in email_ids_set:
             email_ids.append(email_id)
             counter -= 1
             if counter % 10 == 0:
@@ -71,12 +73,15 @@ def process():
                 extracted_price = float(extracted_price.replace(',', '.'))
 
             dic[extracted_month] = dic.get(extracted_month, 0.0) + extracted_price
+        else:
+            print(f"Datei {file} wurde bereits verarbeitet. Überspringe...")
 
     dic = dict(sorted(dic.items(), key=lambda item: (int(item[0].split('.')[1]), int(item[0].split('.')[0]))))
     
-    dic["avg"] = round(sum(dic.values()) / len(dic), 2)
-
-    print(dic)
+    try:
+        dic["avg"] = round(sum(dic.values()) / len(dic), 2)
+    except ZeroDivisionError:
+        dic["avg"] = 0.0
 
     # Define the headers (column names)
     headers = ["month", "euro"]
@@ -107,7 +112,7 @@ def process():
             csvwriter = csv.writer(csvfile)
             rows_to_write = [[email] for email in email_ids]
             # Write the data rows
-            csvwriter.writerows(email_ids)
+            csvwriter.writerows(rows_to_write)
 
         print(f"Successfully created the file: {filename}")
 
